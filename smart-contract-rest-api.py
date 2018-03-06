@@ -272,7 +272,6 @@ def main():
     d.start()
 
     host = "0.0.0.0"
-    app = Klein()
 
     if args.port_rpc:
         logger.info("Starting json-rpc api server on http://%s:%s" % (host, args.port_rpc))
@@ -282,7 +281,7 @@ def main():
 
     if args.port_rest:
         logger.info("Starting smartcontract api server on http://%s:%s" % (host, args.port_rest))
-        endpoint_description = "tcp:port=%s" % API_PORT
+        endpoint_description = "tcp:port={0}:interface={1}".format(args.port_rest, host)
         endpoint = endpoints.serverFromString(reactor, endpoint_description)
         endpoint.listen(Site(app.resource()))
 
