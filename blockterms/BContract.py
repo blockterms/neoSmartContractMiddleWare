@@ -1,5 +1,6 @@
 
 import os
+import binascii
 from logzero import logger
 from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
@@ -15,36 +16,49 @@ class BContract(object):
     def __init__(self, contract_hash, wallet_file_path, wallet_password):
         logger.info("Initializes a BContract Instance")
         self.contract_hash = contract_hash
-        if not os.path.exists(wallet_file_path):
+        self.wallet_file_path = wallet_file_path
+        self.wallet_password = wallet_password
+        if not os.path.exists(self.wallet_file_path):
             logger.error("Wallet file not found.")
             raise RuntimeError('Wallet File Not found')
-
-        password_key = to_aes_key(wallet_password)
+        password_key = to_aes_key(self.wallet_password)
 
         try:
-            self.Wallet = UserWallet.Open(wallet_file_path, password_key)
-
-            self._walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
-            self._walletdb_loop.start(1)
-            logger.info("Opened wallet at %s" % wallet_file_path)
+            self.Wallet = UserWallet.Open(self.wallet_file_path, password_key)
+            logger.info("Opened wallet at %s" % self.wallet_file_path)
         except Exception as e:
             logger.error("Could not open wallet: %s" % e)
             raise RuntimeError("Could not open wallet: %s" % e)
 
+    def start_db_loop(self):
+        try:
+            self.walletdb_loop = task.LoopingCall(self.Wallet.ProcessBlocks)
+            self.walletdb_loop.start(1)
+        except Exception as e:
+            logger.error("Something went wrong when starting the wallet db loop: %s" % e)
+            raise RuntimeError("Something went wrong when starting the wallet db loop: %s" % e)
+
     def invoke_contract(self, command, args):
         logger.info("Invoking a smart contract")
 
-        if not self.wallet.IsSynced:
+        if not self.Wallet.IsSynced:
             logger.error("Node is still catching up with blockchain.")
             raise RuntimeError('Node is still catching up with blockchain.')
+        argshex = []
+        for a in args:
+            argshex.append(binascii.hexlify(a.encode('utf-8')))
 
-        params = [self.contract_hash, command,args]
-
-        tx, fee, results, num_ops = TestInvokeContract(self.Wallet, params,parse_params=False)
+        params = [self.contract_hash, command, argshex]
+        logger.info(params)
+        tx, fee, results, num_ops = TestInvokeContract(self.Wallet, params)
 
         if tx is not None and results is not None:
             result = InvokeContract(self.Wallet, tx, fee)
-            return result
+            if result:
+                return result.Hash.ToString()
+            else:
+                logger.error("Invoking a smart contract went wrong")
+                raise RuntimeError('Something went wrong during TestInvoke')
         else:
             logger.error("Invoking a smart contract went wrong")
             raise RuntimeError('Something went wrong during TestInvoke')
