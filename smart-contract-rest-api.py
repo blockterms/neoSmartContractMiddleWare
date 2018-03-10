@@ -45,9 +45,9 @@ from neo.Settings import settings
 from neo.Network.api.decorators import json_response, gen_authenticated_decorator, catch_exceptions
 from neo.contrib.smartcontract import SmartContract
 from blockterms.Partnership import Partnership
+from blockterms.BContract import BContract
 
-# Set the hash of your contract here:
-SMART_CONTRACT_HASH = "0x1185f3c0dde8136966b30bed835b78917a78fd96"
+
 
 # Default REST API port is 8080, and can be overwritten with an env var:
 API_PORT = os.getenv("NEO_REST_API_PORT", 8080)
@@ -65,6 +65,11 @@ API_AUTH_TOKEN = os.getenv("NEO_REST_API_TOKEN", None)
 if not API_AUTH_TOKEN:
     raise Exception("No NEO_REST_API_TOKEN environment variable found!")
 
+# Set the hash of your contract here:
+SMART_CONTRACT_HASH = "0x1185f3c0dde8136966b30bed835b78917a78fd96"
+WALLET_FILE_PATH = "../wallets/new_first"
+WALLET_PASSWORD = "1234567890"
+
 # Internal: setup the smart contract instance
 smart_contract = SmartContract(SMART_CONTRACT_HASH)
 
@@ -74,11 +79,14 @@ app = Klein()
 # Internal: generate the @authenticated decorator with valid tokens
 authenticated = gen_authenticated_decorator(API_AUTH_TOKEN)
 
+try:
+    bcontract = BContract(SMART_CONTRACT_HASH,WALLET_FILE_PATH,WALLET_PASSWORD)
+except Exception as e:
+    logger.error("Error starting the custom neo node. wallet file and correct password are necessary")
+    exit(1)
 #
 # Smart contract event handler for Runtime.Notify events
 #
-
-
 @smart_contract.on_notify
 def sc_notify(event):
     logger.info("SmartContract Runtime.Notify event: %s", event)
@@ -125,9 +133,8 @@ def partnership(request, adr):
     # this API returns the partnership information
     # for the given address
     #
-    p = Partnership(adr)
-    return p.info()
-
+    res = bcontract.info(adr)
+    return res
 
 @app.route('/partnership', methods=['POST'])
 @catch_exceptions
@@ -136,14 +143,14 @@ def partnership(request, adr):
 def create_partnership(request):
     # Parse POST JSON body
     body = json.loads(request.content.read().decode("utf-8"))
-    return Partnership.create(body)
+    p = Partnership(body["address"],body["currency"],body["flatfees_partners"],body["percentage_partners"],body["webpage"])
+    res = bcontract.create(p)
+    return res
 
 
 #
 # Main method which starts everything up
 #
-
-
 def main():
     # Setup the blockchain
     blockchain = LevelDBBlockchain(settings.LEVELDB_PATH)
@@ -154,6 +161,8 @@ def main():
 
     # Disable smart contract events for external smart contracts
     settings.set_log_smart_contract_events(False)
+
+    # Open a wallet otherwise exit.
 
     # Start a thread with custom code
     d = threading.Thread(target=custom_background_code)

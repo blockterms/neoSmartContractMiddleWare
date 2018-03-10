@@ -6,18 +6,15 @@
 
 ## Python interface to call smartcontracts
 
-Note: This is a work in progress.
+Note: This is a work in progress and the API is not stable enough.
 
-##setup
+##Setup
 
 Check out this project in the same folder as neo-python
 
-Wallet dependency in neo-python is not ideal to have a generic invokeContract API.
+make sure you have python 3.6 environment
 
-The api I would like to achieve looks as follows.
-
-invokeContract(contracthash, account_public_key, account_privatekey, command, args)
-
+set correct smartcontracthash, wallt_file_path and wallet_password 
 
 #
 # References:
