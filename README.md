@@ -14,8 +14,11 @@ Check out this project in the same folder as neo-python
 
 make sure you have python 3.6 environment
 
-set correct smartcontracthash, wallt_file_path and wallet_password 
+set correct smartcontracthash, wallet_file_path and wallet_password 
 
+Start the python server using
+
+NEO_REST_API_TOKEN="123" python smart-contract-rest-api.py
 #
 # References:
 #

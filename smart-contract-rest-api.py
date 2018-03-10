@@ -79,12 +79,8 @@ app = Klein()
 # Internal: generate the @authenticated decorator with valid tokens
 authenticated = gen_authenticated_decorator(API_AUTH_TOKEN)
 
-try:
-    bcontract = BContract(SMART_CONTRACT_HASH,WALLET_FILE_PATH,WALLET_PASSWORD)
-except Exception as e:
-    logger.error("Error starting the custom neo node. wallet file and correct password are necessary")
-    exit(1)
-#
+bcontract = None
+
 # Smart contract event handler for Runtime.Notify events
 #
 @smart_contract.on_notify
@@ -163,7 +159,13 @@ def main():
     settings.set_log_smart_contract_events(False)
 
     # Open a wallet otherwise exit.
-
+    try:
+        bcontract = BContract(SMART_CONTRACT_HASH, WALLET_FILE_PATH, WALLET_PASSWORD)
+    except Exception as e:
+        logger.error("Error starting the custom neo node. wallet file and correct password are necessary")
+        exit(1)
+        
+    #
     # Start a thread with custom code
     d = threading.Thread(target=custom_background_code)
     d.setDaemon(True)  # daemonizing the thread will kill it when the main thread is quit
