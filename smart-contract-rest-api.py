@@ -145,7 +145,7 @@ def partnership(request, adr):
     #
     res = {}
     try:
-        res["tx"] = bcontract.info(adr)
+        res = bcontract.info(adr)
     except Exception as e:
         res["error"] = True
         res["message"] = e
@@ -190,8 +190,7 @@ def create_partnership(request):
     p = Partnership(body["address"],body["currency"],body["flatfees_partners"],body["percentage_partners"],body["webpage"])
     res = {}
     try:
-        tx = bcontract.create(p)
-        res["tx"] = tx
+        res = bcontract.create(p)
     except Exception as e:
         res["error"] = True
         res["message"] = e

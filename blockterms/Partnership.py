@@ -10,7 +10,6 @@ Date: Dec 22 2018
 class Partnership(object):
 
     def __init__(self, address, currency, flatfees_partners, percentage_partners, webpage=""):
-        print("Initializes a partnership")
         self.address = address
         self.currency = currency
 

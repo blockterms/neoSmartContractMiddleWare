@@ -64,25 +64,53 @@ class BContract(object):
             raise RuntimeError('Something went wrong during TestInvoke')
 
     def create(self,partnership):
-        args = [partnership.currency,partnership.flatfees_partners,partnership.percentage_partners,partnership.webpage]
-        return self.invoke_contract("create",args)
+        logger.info("Creating a new Partnership")
+        if self.wallet_has_gas():
+            logger.info("Wallet has Gas")
+            args = [partnership.currency, partnership.flatfees_partners, partnership.percentage_partners,
+                    partnership.webpage]
+            return {"tx": self.invoke_contract("create", args)}
+        else:
+            return {"error": True, "message": "Wallet has no gas, wait for the next block"}
 
     def info(self,address):
-        return self.invoke_contract("info",[address])
+        if self.wallet_has_gas():
+            return {"tx": self.invoke_contract("info",[address])}
+        else:
+            return {"error": True, "message": "Wallet has no gas, wait for the next block"}
 
     def update(self,address, property, new_value):
-        cmd = "set_flatfees"
-        if property == "webpage":
-            cmd = "set_webpage"
-        elif property == "set_partnership":
-            cmd = "set_partnership"
-        return self.invoke_contract(cmd, [address,new_value])
+        if self.wallet_has_gas():
+            cmd = "set_flatfees"
+            if property == "webpage":
+                cmd = "set_webpage"
+            elif property == "set_partnership":
+                cmd = "set_partnership"
+            return {"tx": self.invoke_contract(cmd, [address, new_value])}
+        else:
+            return {"error": True, "message": "Wallet has no gas, wait for the next block"}
 
     def delete(self,address):
-        return self.invoke_contract("delete", [address])
+        if self.wallet_has_gas():
+            return {"tx": self.invoke_contract("delete", [address])}
+        else:
+            return {"error": True, "message": "Wallet has no gas, wait for the next block"}
 
     def transfer(self,from_address,to_address):
-        return self.invoke_contract("transfer", [from_address,to_address])
+        if self.wallet_has_gas():
+            return {"tx": self.invoke_contract("transfer", [from_address, to_address])}
+        else:
+            return {"error": True, "message": "Wallet has no gas, wait for the next block"}
+
+    def wallet_has_gas(self):
+        synced_balances = self.Wallet.GetSyncedBalances()
+        for balance in synced_balances:
+            asset, amount = balance
+            logger.info("- balance %s: %s", asset, amount)
+            if asset == "NEOGas" and amount > 0:
+                return True
+
+        return False
 
 
 def InvokeContract(wallet, tx, fee=Fixed8.Zero()):

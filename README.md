@@ -34,6 +34,14 @@ NEO_REST_API_TOKEN="123" python smart-contract-rest-api.py -t --port-rpc 8082 --
 This starts both REST api and json RPC server.
 
 #
+# Guidelines for writing a smartcontract api client
+#
+Please note that invoking smartcontract api repeatedly wont work, you need to have some sort of queue on the client side and if
+invoking fails, try again.
+
+With the current implementation of this project, you are limited to having one smartcontract invoke per block. 
+
+#
 # References:
 #
 
