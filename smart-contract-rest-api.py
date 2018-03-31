@@ -23,14 +23,14 @@ The REST API is using the Python package 'klein', which makes it possible to
 create HTTP routes and handlers with Twisted in a similar style to Flask:
 https://github.com/twisted/klein
 """
-
-import sys
-sys.path.append('../neo-python')
-
 import os
 import threading
 import argparse
 import json
+
+# import sys
+# sys.path.append('../neo-python')
+
 from time import sleep
 
 from logzero import logger
